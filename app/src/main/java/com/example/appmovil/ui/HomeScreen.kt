@@ -8,7 +8,6 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -26,26 +25,55 @@ fun HomeScreen(
     onNavigateToCart: () -> Unit,
     onNavigateToProfile: () -> Unit,
     onNavigateToDetail: (Int) -> Unit,
-    onToggleTheme: () -> Unit
+    onToggleTheme: () -> Unit,
+    onLogout: () -> Unit // <--- 1. Nuevo parámetro para cerrar sesión
 ) {
     var menuExpanded by remember { mutableStateOf(false) }
 
     val sampleProducts = listOf(
-        Product(1, "Casco Deportivo AGV K1S", 250000.0, "Casco aerodinámico certificado con visor antivaho y ventilación avanzada para máxima seguridad en carretera y pista.", R.drawable.casco),
-        Product(2, "Chaqueta de Cuero Dainese", 450000.0, "Chaqueta de alta resistencia con protecciones homologadas en hombros, codos y espalda. Ideal para cualquier clima.", R.drawable.chaqueta),
-        Product(3, "Guantes Dainese Carbon Long", 135000.0, "Guantes deportivos largos con protección en nudillos de fibra de carbono y refuerzo antideslizante en la palma.", R.drawable.guantes),
-        Product(4, "Botas de Deportivas Dainese Toque 3", 300000.0, "Calzado deportivo con refuerzo en talón, tobillo y protección para el cambio de marchas.", R.drawable.botas)
+        Product(
+            1,
+            "Transformador de Potencia 220kV",
+            "TR-220-01",
+            "Subestación El Salto",
+            "Aislamiento anterior: 2.5 GΩ",
+            "Pruebas de resistencia de aislamiento y tangente delta.",
+            R.drawable.transformador
+        ),
+        Product(
+            2,
+            "Relé de Protección Sepam",
+            "REL-SEP-04",
+            "Planta Maipú",
+            "Umbral anterior: 5.2 A",
+            "Prueba de inyección de corrientes secundarias.",
+            R.drawable.rele
+        ),
+        Product(
+            3,
+            "Celda de Media Tensión 12kV",
+            "CEL-12V-09",
+            "Distribución Quilicura",
+            "Resistencia anterior: 45 µΩ",
+            "Inspección de sistemas de enclavamiento.",
+            R.drawable.celda
+        ),
+        Product(
+            4,
+            "Banco de Baterías Subestación",
+            "BAT-SUB-02",
+            "Subestación Lo Espejo",
+            "Voltaje anterior: 2.15 V/celda",
+            "Prueba de descarga y resistencia interna.",
+            R.drawable.baterias
+        )
     )
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Catálogo de Productos") },
+                title = { Text("Equipos Eléctricos - Induztek") },
                 actions = {
-                    IconButton(onClick = onNavigateToCart) {
-                        Icon(imageVector = Icons.Default.ShoppingCart, contentDescription = "Carrito")
-                    }
-
                     IconButton(onClick = { menuExpanded = true }) {
                         Icon(imageVector = Icons.Default.MoreVert, contentDescription = "Menú")
                     }
@@ -55,14 +83,14 @@ fun HomeScreen(
                         onDismissRequest = { menuExpanded = false }
                     ) {
                         DropdownMenuItem(
-                            text = { Text("Mi Perfil") },
+                            text = { Text("Mi Perfil (Técnico)") },
                             onClick = {
                                 menuExpanded = false
                                 onNavigateToProfile()
                             }
                         )
                         DropdownMenuItem(
-                            text = { Text("Carrito de Compras") },
+                            text = { Text("Protocolos Registrados") },
                             onClick = {
                                 menuExpanded = false
                                 onNavigateToCart()
@@ -73,6 +101,14 @@ fun HomeScreen(
                             onClick = {
                                 menuExpanded = false
                                 onToggleTheme()
+                            }
+                        )
+                        HorizontalDivider() // Línea divisoria estética
+                        DropdownMenuItem(
+                            text = { Text("Cerrar Sesión", color = MaterialTheme.colorScheme.error) },
+                            onClick = {
+                                menuExpanded = false
+                                onLogout() // <--- Ejecuta la acción de salida
                             }
                         )
                     }
@@ -138,9 +174,15 @@ fun ProductCard(product: Product, onClick: () -> Unit) {
             Spacer(modifier = Modifier.height(4.dp))
 
             Text(
-                text = "$${product.precio}",
+                text = "Cód: ${product.codigoEquipo}",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.primary
+            )
+            Text(
+                text = product.ubicacionCliente,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1
             )
         }
     }

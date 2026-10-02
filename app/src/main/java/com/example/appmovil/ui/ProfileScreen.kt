@@ -20,13 +20,13 @@ import com.example.appmovil.models.UserEntity
 @Composable
 fun ProfileScreen(
     user: UserEntity,
-    onUpdateProfile: (String, String) -> Unit, // (nuevaDireccion, nuevaFotoUri)
+    onUpdateProfile: (String, String) -> Unit, // (nuevaBase, nuevaFotoUri)
     onBackClick: () -> Unit
 ) {
     var direccion by remember { mutableStateOf(user.direccion) }
     var fotoUri by remember { mutableStateOf(user.fotoUri) }
 
-    // Lanzador para seleccionar imagen desde la Galería
+    // Lanzador para seleccionar imagen desde la Galería (Recurso nativo requerido)
     val galleryLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
@@ -38,7 +38,7 @@ fun ProfileScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Mi Perfil") },
+                title = { Text("Perfil de Técnico en Terreno") },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
                         Icon(imageVector = Icons.Default.ArrowBack, contentDescription = "Volver")
@@ -58,7 +58,7 @@ fun ProfileScreen(
                 .padding(24.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Avatar de Perfil (Cámara / Galería)
+            // Avatar de Perfil
             Surface(
                 modifier = Modifier
                     .size(120.dp)
@@ -79,16 +79,16 @@ fun ProfileScreen(
 
             // Botón para abrir la galería y actualizar la foto de perfil nativa
             OutlinedButton(onClick = { galleryLauncher.launch("image/*") }) {
-                Text("Cambiar Foto de Perfil (Galería)")
+                Text("Actualizar Fotografía (Galería)")
             }
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Campos informativos (Solo lectura o correo)
+            // Campos informativos (Solo lectura)
             OutlinedTextField(
                 value = user.nombre,
                 onValueChange = {},
-                label = { Text("Nombre") },
+                label = { Text("Nombre del Técnico") },
                 enabled = false,
                 modifier = Modifier.fillMaxWidth()
             )
@@ -98,18 +98,18 @@ fun ProfileScreen(
             OutlinedTextField(
                 value = user.email,
                 onValueChange = {},
-                label = { Text("Correo electrónico") },
+                label = { Text("Correo Institucional") },
                 enabled = false,
                 modifier = Modifier.fillMaxWidth()
             )
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Campo de Dirección (Editable)
+            // Campo de Zona / Base Asignada (Adaptado del campo dirección)
             OutlinedTextField(
                 value = direccion,
                 onValueChange = { direccion = it },
-                label = { Text("Dirección de despacho") },
+                label = { Text("Zona / Base de Operaciones Asignada") },
                 modifier = Modifier.fillMaxWidth()
             )
 
@@ -122,7 +122,7 @@ fun ProfileScreen(
                     .fillMaxWidth()
                     .height(50.dp)
             ) {
-                Text(text = "Guardar Cambios", style = MaterialTheme.typography.bodyLarge)
+                Text(text = "Guardar Cambios de Perfil", style = MaterialTheme.typography.bodyLarge)
             }
         }
     }

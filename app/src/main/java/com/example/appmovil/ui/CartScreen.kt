@@ -6,6 +6,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.CloudUpload
+import androidx.compose.material.icons.filled.Home
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -21,20 +23,23 @@ fun CartScreen(
     onToggleSelection: (CartItemEntity) -> Unit,
     onDeleteItem: (Long) -> Unit,
     onCheckout: () -> Unit,
-    onBackClick: () -> Unit
+    onBackClick: () -> Unit,
+    onHomeClick: () -> Unit
 ) {
-    // Calculamos el subtotal y total solo de los elementos seleccionados
-    val subtotal = cartItems.filter { it.isSelected }.sumOf { it.precio * it.cantidad }
-    val envio = if (subtotal > 0) 5000.0 else 0.0 // Costo de envío simulado
-    val total = subtotal + envio
+    val totalProtocolos = cartItems.count { it.isSelected }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Carrito de Compras") },
+                title = { Text("Protocolos de Prueba en Terreno") },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
-                        Icon(imageVector = Icons.Default.ArrowBack, contentDescription = "Volver")
+                        Icon(imageVector = Icons.Default.ArrowBack, contentDescription = "Volver al producto")
+                    }
+                },
+                actions = {
+                    IconButton(onClick = onHomeClick) {
+                        Icon(imageVector = Icons.Default.Home, contentDescription = "Ir al Inicio")
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -58,26 +63,11 @@ fun CartScreen(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            Text(text = "Subtotal:")
-                            Text(text = "$$subtotal")
-                        }
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Text(text = "Envío:")
-                            Text(text = "$$envio")
-                        }
-                        HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Text(text = "Total a Pagar:", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
-                            Text(text = "$$total", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
+                            Text(text = "Protocolos seleccionados para envío:")
+                            Text(text = "$totalProtocolos", fontWeight = FontWeight.Bold)
                         }
 
-                        Spacer(modifier = Modifier.height(16.dp))
+                        Spacer(modifier = Modifier.height(12.dp))
 
                         Button(
                             onClick = onCheckout,
@@ -86,7 +76,9 @@ fun CartScreen(
                                 .height(50.dp),
                             enabled = cartItems.any { it.isSelected }
                         ) {
-                            Text(text = "Pagar Compra", style = MaterialTheme.typography.bodyLarge)
+                            Icon(imageVector = Icons.Default.CloudUpload, contentDescription = null)
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(text = "Sincronizar Protocolos (Offline)", style = MaterialTheme.typography.bodyLarge)
                         }
                     }
                 }
@@ -101,7 +93,7 @@ fun CartScreen(
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = "Tu carrito está vacío",
+                    text = "No hay protocolos de prueba registrados en esta visita",
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -156,9 +148,19 @@ fun CartItemCard(
                     fontWeight = FontWeight.Bold
                 )
                 Text(
-                    text = "$${item.precio} x ${item.cantidad}",
+                    text = "Cód: ${item.codigoEquipo} | ${item.ubicacionCliente}",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.primary
+                )
+                Text(
+                    text = "Medición: ${item.valoresMedicion}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.secondary
+                )
+                Text(
+                    text = "Registrado: ${item.fechaHora}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
 

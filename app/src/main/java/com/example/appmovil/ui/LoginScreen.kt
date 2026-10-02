@@ -26,10 +26,19 @@ fun LoginScreen(
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            // Título adaptado al acceso corporativo de la app
             Text(
-                text = "Iniciar Sesión",
+                text = "Induztek - Terreno",
                 style = MaterialTheme.typography.headlineLarge,
                 color = MaterialTheme.colorScheme.primary
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Text(
+                text = "Portal de Acceso para Técnicos",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
             Spacer(modifier = Modifier.height(32.dp))
@@ -38,7 +47,7 @@ fun LoginScreen(
             OutlinedTextField(
                 value = viewModel.email,
                 onValueChange = { viewModel.onEmailChanged(it) },
-                label = { Text("Correo electrónico") },
+                label = { Text("Correo institucional") },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth()
             )
@@ -80,14 +89,14 @@ fun LoginScreen(
                     .fillMaxWidth()
                     .height(50.dp)
             ) {
-                Text(text = "Ingresar", style = MaterialTheme.typography.bodyLarge)
+                Text(text = "Iniciar Sesión", style = MaterialTheme.typography.bodyLarge)
             }
 
             Spacer(modifier = Modifier.height(16.dp))
 
             // Enlace para ir al Registro
             TextButton(onClick = onNavigateToRegister) {
-                Text(text = "¿No tienes una cuenta? Regístrate aquí")
+                Text(text = "¿No estás registrado? Crear cuenta técnica")
             }
         }
     }

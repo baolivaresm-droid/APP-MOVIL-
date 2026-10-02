@@ -26,10 +26,19 @@ fun RegisterScreen(
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            // Título adaptado al registro de técnicos
             Text(
-                text = "Crear Cuenta",
+                text = "Registro de Técnico",
                 style = MaterialTheme.typography.headlineLarge,
                 color = MaterialTheme.colorScheme.primary
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Text(
+                text = "Induztek Ingeniería SpA",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
             Spacer(modifier = Modifier.height(32.dp))
@@ -38,7 +47,7 @@ fun RegisterScreen(
             OutlinedTextField(
                 value = viewModel.name,
                 onValueChange = { viewModel.onNameChanged(it) },
-                label = { Text("Nombre completo") },
+                label = { Text("Nombre y apellido del técnico") },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth()
             )
@@ -49,7 +58,7 @@ fun RegisterScreen(
             OutlinedTextField(
                 value = viewModel.email,
                 onValueChange = { viewModel.onEmailChanged(it) },
-                label = { Text("Correo electrónico") },
+                label = { Text("Correo institucional") },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth()
             )
@@ -91,14 +100,14 @@ fun RegisterScreen(
                     .fillMaxWidth()
                     .height(50.dp)
             ) {
-                Text(text = "Registrarse", style = MaterialTheme.typography.bodyLarge)
+                Text(text = "Registrar Cuenta", style = MaterialTheme.typography.bodyLarge)
             }
 
             Spacer(modifier = Modifier.height(16.dp))
 
             // Enlace para volver al Login
             TextButton(onClick = onNavigateBack) {
-                Text(text = "¿Ya tienes una cuenta? Inicia sesión")
+                Text(text = "¿Ya estás registrado? Inicia sesión")
             }
         }
     }

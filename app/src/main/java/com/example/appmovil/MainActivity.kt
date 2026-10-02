@@ -11,13 +11,11 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.appmovil.models.AppDatabase
 import com.example.appmovil.models.CartItemEntity
-import com.example.appmovil.models.Product
 import com.example.appmovil.models.UserEntity
 import com.example.appmovil.repository.UserRepository
 import com.example.appmovil.ui.*
 import com.example.appmovil.viewmodel.LoginViewModel
 import com.example.appmovil.viewmodel.RegisterViewModel
-import androidx.compose.runtime.collectAsState
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import kotlinx.coroutines.launch
@@ -27,24 +25,18 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // 1. Inicializamos la base de datos de Room y el repositorio
         val database = AppDatabase.getDatabase(applicationContext)
         val userDao = database.appDao()
         val userRepository = UserRepository(userDao)
 
-        // 2. Instanciamos los ViewModels
         val loginViewModel = LoginViewModel(userRepository)
         val registerViewModel = RegisterViewModel(userRepository)
 
         setContent {
-            // Estado global simple para alternar el tema claro/oscuro requerido por pauta
             var isDarkTheme by remember { mutableStateOf(false) }
-
-            // Estado de la sesión del usuario actual y carrito
             var loggedUser by remember { mutableStateOf<UserEntity?>(null) }
             val coroutineScope = rememberCoroutineScope()
 
-            // Observamos los elementos del carrito desde Room en tiempo real
             val cartItemsFlow = userDao.getCartItems().collectAsState(initial = emptyList())
 
             AppThemeWrapper(darkTheme = isDarkTheme) {
@@ -58,7 +50,6 @@ class MainActivity : ComponentActivity() {
                             viewModel = loginViewModel,
                             onLoginSuccess = {
                                 coroutineScope.launch {
-                                    // Obtenemos los datos del usuario logueado para pasarlos al perfil
                                     loggedUser = userRepository.getUserByEmail(loginViewModel.email.trim())
                                     navController.navigate("home") {
                                         popUpTo("login") { inclusive = true }
@@ -84,7 +75,7 @@ class MainActivity : ComponentActivity() {
                         )
                     }
 
-                    // Pantalla 3: Home (Catálogo)
+                    // Pantalla 3: Home (Catálogo de Equipos)
                     composable("home") {
                         HomeScreen(
                             onNavigateToCart = { navController.navigate("cart") },
@@ -92,11 +83,17 @@ class MainActivity : ComponentActivity() {
                             onNavigateToDetail = { productId ->
                                 navController.navigate("detail/$productId")
                             },
-                            onToggleTheme = { isDarkTheme = !isDarkTheme }
+                            onToggleTheme = { isDarkTheme = !isDarkTheme },
+                            onLogout = {
+                                loggedUser = null
+                                navController.navigate("login") {
+                                    popUpTo(0) { inclusive = true }
+                                }
+                            }
                         )
                     }
 
-                    // Pantalla 4: Detalle del Producto
+                    // Pantalla 4: Detalle del Equipo y Registro de Mediciones en Terreno
                     composable(
                         route = "detail/{productId}",
                         arguments = listOf(navArgument("productId") { type = NavType.IntType })
@@ -110,25 +107,30 @@ class MainActivity : ComponentActivity() {
                                     popUpTo("home") { inclusive = true }
                                 }
                             },
-                            onAddToCart = { product ->
+                            onNavigateToCart = {
+                                // Abre la pantalla de protocolos directamente desde el icono superior
+                                navController.navigate("cart")
+                            },
+                            onAddProtocol = { product, valoresMedicion, fechaHora ->
                                 coroutineScope.launch {
-                                    // Guardamos el producto en la tabla carrito de Room
                                     val cartItem = CartItemEntity(
                                         productId = product.id,
                                         titulo = product.titulo,
-                                        precio = product.precio,
+                                        codigoEquipo = product.codigoEquipo,
+                                        ubicacionCliente = product.ubicacionCliente,
+                                        valoresMedicion = valoresMedicion,
+                                        fechaHora = fechaHora,
                                         imagenResId = product.imagenResId,
                                         cantidad = 1,
                                         isSelected = true
                                     )
                                     userDao.insertCartItem(cartItem)
-                                    navController.popBackStack()
                                 }
                             }
                         )
                     }
 
-                    // Pantalla 5: Carrito de Compras
+                    // Pantalla 5: Listado de Protocolos Registrados
                     composable("cart") {
                         CartScreen(
                             cartItems = cartItemsFlow.value,
@@ -148,11 +150,18 @@ class MainActivity : ComponentActivity() {
                                     navController.popBackStack()
                                 }
                             },
-                            onBackClick = { navController.popBackStack() }
+                            onBackClick = {
+                                navController.popBackStack()
+                            },
+                            onHomeClick = {
+                                navController.navigate("home") {
+                                    popUpTo("home") { inclusive = true }
+                                }
+                            }
                         )
                     }
 
-                    // Pantalla 6: Mi Perfil
+                    // Pantalla 6: Mi Perfil (Técnico)
                     composable("profile") {
                         loggedUser?.let { user ->
                             ProfileScreen(
@@ -177,7 +186,6 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun AppThemeWrapper(darkTheme: Boolean, content: @Composable () -> Unit) {
-    // Aplica el esquema de colores Material 3 Claro u Oscuro requerido por pauta
     MaterialTheme(
         colorScheme = if (darkTheme) darkColorScheme() else lightColorScheme(),
         content = content
