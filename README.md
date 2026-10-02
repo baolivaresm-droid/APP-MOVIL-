@@ -4,7 +4,7 @@ Aplicación móvil desarrollada en **Jetpack Compose** (Android) para técnicos 
 
 ---
 
-## 🚀 Características Principales
+##  Características Principales
 
 * **Autenticación de Usuarios:** Sistema de inicio de sesión y registro con persistencia local mediante base de datos relacional.
 * **Catálogo de Equipos Eléctricos:** Visualización en cuadrícula de los equipos críticos en terreno (con códigos de identificación, ubicaciones de clientes e historiales previos).
@@ -15,7 +15,7 @@ Aplicación móvil desarrollada en **Jetpack Compose** (Android) para técnicos 
 
 ---
 
-## 🛠️ Tecnologías y Librerías Utilizadas
+##  Tecnologías y Librerías Utilizadas
 
 * **UI:** Jetpack Compose, Material Design 3.
 * **Navegación:** Jetpack Navigation Compose.
@@ -25,7 +25,7 @@ Aplicación móvil desarrollada en **Jetpack Compose** (Android) para técnicos 
 
 ---
 
-## 📱 Capturas de Pantalla / Arquitectura
+## 📱Capturas de Pantalla / Arquitectura
 El proyecto sigue los principios de arquitectura limpia de Android, separando responsabilidades en vistas (`ui`), modelos de datos/entidades (`models`), repositorios (`repository`) y lógica de negocio/viewmodels.
 
 ---
