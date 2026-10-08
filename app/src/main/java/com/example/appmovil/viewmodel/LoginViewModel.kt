@@ -36,24 +36,42 @@ class LoginViewModel(private val userRepository: UserRepository) : ViewModel() {
 
     // Función para validar y procesar el inicio de sesión
     fun login(onSuccess: () -> Unit) {
-        // Validaciones básicas de campos vacíos
-        if (email.isBlank() || password.isBlank()) {
+        val cleanEmail = email.trim()
+
+        // 1. Validar campos vacíos
+        if (cleanEmail.isBlank() || password.isBlank()) {
             loginError = "Por favor, completa todos los campos"
             return
         }
 
+        // 2. Validar formato de correo (debe contener '@')
+        if (!cleanEmail.contains("@")) {
+            loginError = "El correo debe ser válido (debe incluir '@')"
+            return
+        }
+
+        // 3. Validar longitud mínima del correo/usuario (mínimo 6 caracteres)
+        if (cleanEmail.length < 6) {
+            loginError = "El correo debe tener al menos 6 caracteres"
+            return
+        }
+
+        // 4. Validar longitud mínima de la contraseña (mínimo 6 caracteres)
+        if (password.length < 6) {
+            loginError = "La contraseña debe tener al menos 6 caracteres"
+            return
+        }
+
+        // Si pasa todas las validaciones locales, consulta a la Base de Datos
         viewModelScope.launch {
             try {
-                // Buscamos el usuario por su correo en la base de datos local (Room)
-                val user = userRepository.getUserByEmail(email.trim())
+                val user = userRepository.getUserByEmail(cleanEmail)
 
                 if (user != null && user.passwordHash == password) {
-                    // Credenciales correctas
                     loginSuccess = true
                     loginError = null
                     onSuccess()
                 } else {
-                    // Credenciales incorrectas
                     loginError = "Correo o contraseña incorrectos"
                 }
             } catch (e: Exception) {

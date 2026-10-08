@@ -44,24 +44,52 @@ class RegisterViewModel(private val userRepository: UserRepository) : ViewModel(
 
     // Función para registrar al usuario validando que no exista previamente
     fun register(onSuccess: () -> Unit) {
-        if (name.isBlank() || email.isBlank() || password.isBlank()) {
+        val cleanName = name.trim()
+        val cleanEmail = email.trim()
+
+        // 1. Validar campos vacíos
+        if (cleanName.isBlank() || cleanEmail.isBlank() || password.isBlank()) {
             registerError = "Por favor, completa todos los campos"
+            return
+        }
+
+        // 2. Validar que el nombre tenga al menos 6 caracteres
+        if (cleanName.length < 6) {
+            registerError = "El nombre debe tener al menos 6 caracteres"
+            return
+        }
+
+        // 3. Validar que el correo contenga '@'
+        if (!cleanEmail.contains("@")) {
+            registerError = "El correo debe incluir el símbolo '@'"
+            return
+        }
+
+        // 4. Validar que el correo tenga al menos 6 caracteres
+        if (cleanEmail.length < 6) {
+            registerError = "El correo debe tener al menos 6 caracteres"
+            return
+        }
+
+        // 5. Validar que la contraseña tenga al menos 6 caracteres
+        if (password.length < 6) {
+            registerError = "La contraseña debe tener al menos 6 caracteres"
             return
         }
 
         viewModelScope.launch {
             try {
-                // Verificamos si el correo ya está registrado
-                val existingUser = userRepository.getUserByEmail(email.trim())
+                // Verificamos si el correo ya está registrado en Room
+                val existingUser = userRepository.getUserByEmail(cleanEmail)
                 if (existingUser != null) {
                     registerError = "El correo ya se encuentra registrado"
                     return@launch
                 }
 
-                // Creamos la entidad de usuario (ajusta los campos según tu UserEntity)
+                // Creamos la entidad de usuario
                 val newUser = UserEntity(
-                    email = email.trim(),
-                    nombre = name.trim(),
+                    email = cleanEmail,
+                    nombre = cleanName,
                     passwordHash = password
                 )
 
