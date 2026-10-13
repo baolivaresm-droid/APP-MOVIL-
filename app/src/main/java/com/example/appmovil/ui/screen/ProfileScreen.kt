@@ -1,6 +1,8 @@
 package com.example.appmovil.ui.screen
 
+import android.Manifest
 import android.content.Context
+import android.content.pm.PackageManager
 import android.net.Uri
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -47,6 +49,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
@@ -60,7 +63,10 @@ import java.util.Locale
 private fun createTempImageFile(context: Context): File {
     val timeStamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
     val storageDir = File(context.cacheDir, "images").apply { if (!exists()) mkdirs() }
-    return File(storageDir, "IMG_$timeStamp.jpg")
+    // Crear físicamente el archivo: si no existe, algunas apps de cámara fallan al escribir.
+    val file = File(storageDir, "IMG_$timeStamp.jpg")
+    if (!file.exists()) file.createNewFile()
+    return file
 }
 
 private fun getImageUriForFile(context: Context, file: File): Uri {
@@ -78,7 +84,9 @@ fun ProfileScreen(
     val context = LocalContext.current
     var direccion by remember { mutableStateOf(user.direccion) }
     var fotoUri by rememberSaveable { mutableStateOf(user.fotoUri) }
-    var pendingCaptureUri by remember { mutableStateOf<Uri?>(null) }
+    // Guardar como String con rememberSaveable: si el sistema destruye la Activity
+    // mientras la cámara está abierta, el Uri no se pierde al volver.
+    var pendingCaptureUriString by rememberSaveable { mutableStateOf<String?>(null) }
     var showDeleteDialog by remember { mutableStateOf(false) }
 
     // Recurso nativo 1: Cámara (Ej.6 CameraX simplificado a TakePicture como Ej.8)
@@ -86,11 +94,46 @@ fun ProfileScreen(
         contract = ActivityResultContracts.TakePicture()
     ) { success ->
         if (success) {
-            fotoUri = pendingCaptureUri?.toString() ?: fotoUri
+            pendingCaptureUriString?.let { fotoUri = it }
             Toast.makeText(context, "Foto tomada correctamente", Toast.LENGTH_SHORT).show()
         } else {
-            pendingCaptureUri = null
             Toast.makeText(context, "No se tomó ninguna foto", Toast.LENGTH_SHORT).show()
+        }
+        pendingCaptureUriString = null
+    }
+
+    // Lanza la cámara creando el archivo temporal de forma segura (evita el crash).
+    fun launchCamera() {
+        try {
+            val file = createTempImageFile(context)
+            val uri = getImageUriForFile(context, file)
+            pendingCaptureUriString = uri.toString()
+            takePictureLauncher.launch(uri)
+        } catch (e: Exception) {
+            pendingCaptureUriString = null
+            Toast.makeText(context, "No se pudo abrir la cámara: ${e.message}", Toast.LENGTH_LONG).show()
+        }
+    }
+
+    // Permiso runtime CAMERA: TakePicture NO lo pide solo, sin esto crashea con
+    // SecurityException en muchos equipos/emuladores.
+    val cameraPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        if (granted) {
+            launchCamera()
+        } else {
+            Toast.makeText(context, "Permiso de cámara denegado", Toast.LENGTH_LONG).show()
+        }
+    }
+
+    fun onTakePhotoClick() {
+        if (ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) ==
+            PackageManager.PERMISSION_GRANTED
+        ) {
+            launchCamera()
+        } else {
+            cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
         }
     }
 
@@ -99,6 +142,12 @@ fun ProfileScreen(
         contract = ActivityResultContracts.PickVisualMedia()
     ) { uri: Uri? ->
         uri?.let {
+            try {
+                // Persistir permiso de lectura para que la foto sobreviva reinicios.
+                context.contentResolver.takePersistableUriPermission(
+                    it, android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION
+                )
+            } catch (_: Exception) { /* PhotoPicker ya otorga acceso temporal */ }
             fotoUri = it.toString()
             Toast.makeText(context, "Foto de galería seleccionada", Toast.LENGTH_SHORT).show()
         }
@@ -149,12 +198,7 @@ fun ProfileScreen(
             Spacer(modifier = Modifier.height(16.dp))
 
             OutlinedButton(
-                onClick = {
-                    val file = createTempImageFile(context)
-                    val uri = getImageUriForFile(context, file)
-                    pendingCaptureUri = uri
-                    takePictureLauncher.launch(uri)
-                },
+                onClick = { onTakePhotoClick() },
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text("Tomar Fotografía (Cámara)")
