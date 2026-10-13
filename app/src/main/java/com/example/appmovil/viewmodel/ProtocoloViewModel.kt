@@ -44,8 +44,9 @@ class ProtocoloViewModel(private val repository: ProtocoloRepository) : ViewMode
         viewModelScope.launch { repository.eliminarProtocolo(id) }
     }
 
-    fun sincronizarProtocolos() {
-        viewModelScope.launch { repository.sincronizarProtocolos() }
+    fun sincronizarSeleccionados(items: List<ProtocoloEntity>) {
+        if (items.isEmpty()) return
+        viewModelScope.launch { repository.sincronizarSeleccionados(items.map { it.id }) }
     }
 }
 

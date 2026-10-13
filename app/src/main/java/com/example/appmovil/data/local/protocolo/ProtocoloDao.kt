@@ -21,6 +21,6 @@ interface ProtocoloDao {
     @Query("DELETE FROM protocolos WHERE id = :id")
     suspend fun deleteProtocolo(id: Long)
 
-    @Query("DELETE FROM protocolos")
-    suspend fun clearProtocolos()
+    @Query("DELETE FROM protocolos WHERE id IN (:ids)")
+    suspend fun deleteByIds(ids: List<Long>)
 }

@@ -36,6 +36,11 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -49,11 +54,13 @@ fun ProtocolosScreen(
     cartItems: List<ProtocoloEntity>,
     onToggleSelection: (ProtocoloEntity) -> Unit,
     onDeleteItem: (Long) -> Unit,
-    onCheckout: () -> Unit,
+    onCheckout: (List<ProtocoloEntity>) -> Unit,
     onBackClick: () -> Unit,
     onHomeClick: () -> Unit
 ) {
     val totalProtocolos = cartItems.count { it.isSelected }
+    val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
 
     // Ej.5: animar color del botón sincronizar según selección
     val syncColor by animateColorAsState(
@@ -63,6 +70,7 @@ fun ProtocolosScreen(
     )
 
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
                 title = { Text("Protocolos de Prueba en Terreno") },
@@ -92,7 +100,14 @@ fun ProtocolosScreen(
                         }
                         Spacer(modifier = Modifier.height(12.dp))
                         Button(
-                            onClick = onCheckout,
+                            onClick = {
+                                val seleccionados = cartItems.filter { it.isSelected }
+                                if (seleccionados.isEmpty()) return@Button
+                                onCheckout(seleccionados)
+                                val mensaje = if (seleccionados.size == 1) "Protocolo sincronizado"
+                                else "${seleccionados.size} protocolos sincronizados"
+                                scope.launch { snackbarHostState.showSnackbar(mensaje) }
+                            },
                             modifier = Modifier.fillMaxWidth().height(50.dp),
                             enabled = cartItems.any { it.isSelected },
                             colors = ButtonDefaults.buttonColors(containerColor = syncColor)
@@ -179,7 +194,7 @@ fun CartScreen(
     cartItems: List<ProtocoloEntity>,
     onToggleSelection: (ProtocoloEntity) -> Unit,
     onDeleteItem: (Long) -> Unit,
-    onCheckout: () -> Unit,
+    onCheckout: (List<ProtocoloEntity>) -> Unit,
     onBackClick: () -> Unit,
     onHomeClick: () -> Unit
 ) = ProtocolosScreen(cartItems, onToggleSelection, onDeleteItem, onCheckout, onBackClick, onHomeClick)

@@ -38,7 +38,7 @@ fun AppNavGraph(
     onAddProtocolo: (EquipoElectrico, String, String) -> Unit,
     onToggleProtocolo: (ProtocoloEntity) -> Unit,
     onDeleteProtocolo: (Long) -> Unit,
-    onSincronizar: () -> Unit
+    onSincronizar: (List<ProtocoloEntity>) -> Unit
 ) {
     // Ej.3: un solo colector ejecuta los eventos sobre el navController.
     LaunchedEffect(mainViewModel) {
@@ -118,7 +118,7 @@ fun AppNavGraph(
                         cartItems = protocolos,
                         onToggleSelection = onToggleProtocolo,
                         onDeleteItem = onDeleteProtocolo,
-                        onCheckout = { onSincronizar(); goBack() },
+                        onCheckout = { seleccionados -> onSincronizar(seleccionados) },
                         onBackClick = goBack,
                         onHomeClick = goHome
                     )

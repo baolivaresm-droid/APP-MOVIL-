@@ -11,5 +11,7 @@ class ProtocoloRepository(private val protocoloDao: ProtocoloDao) {
     suspend fun guardarProtocolo(item: ProtocoloEntity) = protocoloDao.insertProtocolo(item)
     suspend fun actualizarProtocolo(item: ProtocoloEntity) = protocoloDao.updateProtocolo(item)
     suspend fun eliminarProtocolo(id: Long) = protocoloDao.deleteProtocolo(id)
-    suspend fun sincronizarProtocolos() = protocoloDao.clearProtocolos()
+    suspend fun sincronizarSeleccionados(ids: List<Long>) {
+        if (ids.isNotEmpty()) protocoloDao.deleteByIds(ids)
+    }
 }

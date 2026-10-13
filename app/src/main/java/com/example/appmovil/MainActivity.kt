@@ -107,8 +107,8 @@ fun AppRoot() {
                 onDeleteProtocolo = { id ->
                     protocoloViewModel.eliminarProtocolo(id)
                 },
-                onSincronizar = {
-                    protocoloViewModel.sincronizarProtocolos()
+                onSincronizar = { seleccionados ->
+                    protocoloViewModel.sincronizarSeleccionados(seleccionados)
                 }
             )
         }
