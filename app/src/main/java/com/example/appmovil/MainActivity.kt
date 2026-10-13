@@ -3,183 +3,114 @@ package com.example.appmovil
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.runtime.*
-import androidx.navigation.NavType
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
-import androidx.navigation.compose.rememberNavController
-import androidx.navigation.navArgument
-import com.example.appmovil.models.AppDatabase
-import com.example.appmovil.models.CartItemEntity
-import com.example.appmovil.models.UserEntity
-import com.example.appmovil.repository.UserRepository
-import com.example.appmovil.ui.*
-import com.example.appmovil.viewmodel.LoginViewModel
-import com.example.appmovil.viewmodel.RegisterViewModel
+import androidx.activity.enableEdgeToEdge
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.compose.rememberNavController
+import com.example.appmovil.data.local.database.AppDatabase
+import com.example.appmovil.data.local.storage.UserPreferences
+import com.example.appmovil.data.local.user.UserEntity
+import com.example.appmovil.data.repository.ProtocoloRepository
+import com.example.appmovil.data.repository.UserRepository
+import com.example.appmovil.model.EquipoElectrico
+import com.example.appmovil.navigation.AppNavGraph
+import com.example.appmovil.viewmodel.AuthViewModel
+import com.example.appmovil.viewmodel.AuthViewModelFactory
+import com.example.appmovil.viewmodel.EstadoViewModel
+import com.example.appmovil.viewmodel.MainViewModel
+import com.example.appmovil.viewmodel.ProtocoloViewModel
+import com.example.appmovil.viewmodel.ProtocoloViewModelFactory
 import kotlinx.coroutines.launch
-import androidx.compose.material3.MaterialTheme
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        val database = AppDatabase.getDatabase(applicationContext)
-        val userDao = database.appDao()
-        val userRepository = UserRepository(userDao)
-
-        val loginViewModel = LoginViewModel(userRepository)
-        val registerViewModel = RegisterViewModel(userRepository)
-
+        enableEdgeToEdge()
         setContent {
-            var isDarkTheme by remember { mutableStateOf(false) }
-            var loggedUser by remember { mutableStateOf<UserEntity?>(null) }
-            val coroutineScope = rememberCoroutineScope()
+            AppRoot()
+        }
+    }
+}
 
-            val cartItemsFlow = userDao.getCartItems().collectAsState(initial = emptyList())
+// Patrón Ej.8 MainActivity AppRoot: Composition Root con Room + repositorios + VM inyectado.
+@Composable
+fun AppRoot() {
+    val context = LocalContext.current.applicationContext
+    val scope = rememberCoroutineScope()
 
-            AppThemeWrapper(darkTheme = isDarkTheme) {
-                val navController = rememberNavController()
+    val db = remember { AppDatabase.getInstance(context) }
+    val userRepository = remember { UserRepository(db.userDao()) }
+    val protocoloRepository = remember { ProtocoloRepository(db.protocoloDao()) }
+    val userPrefs = remember { UserPreferences(context) }
 
-                NavHost(navController = navController, startDestination = "login") {
+    val authViewModel: AuthViewModel = viewModel(factory = AuthViewModelFactory(userRepository))
+    val mainViewModel: MainViewModel = viewModel()
+    // Ej.5: el tema claro/oscuro vive en EstadoViewModel + DataStore.
+    val estadoViewModel: EstadoViewModel = viewModel()
+    // Ej.7: los protocolos viven en ProtocoloViewModel + StateFlow.
+    val protocoloViewModel: ProtocoloViewModel = viewModel(
+        factory = ProtocoloViewModelFactory(protocoloRepository)
+    )
 
-                    // Pantalla 1: Login
-                    composable("login") {
-                        LoginScreen(
-                            viewModel = loginViewModel,
-                            onLoginSuccess = {
-                                coroutineScope.launch {
-                                    loggedUser = userRepository.getUserByEmail(loginViewModel.email.trim())
-                                    navController.navigate("home") {
-                                        popUpTo("login") { inclusive = true }
-                                    }
-                                }
-                            },
-                            onNavigateToRegister = {
-                                navController.navigate("register")
-                            }
-                        )
+    var loggedUser by remember { mutableStateOf<UserEntity?>(null) }
+    val protocolos by protocoloViewModel.protocolos.collectAsState()
+    val temaActivo by estadoViewModel.activo.collectAsState()
+    val isDarkTheme = temaActivo ?: false
+
+    val navController = rememberNavController()
+
+    AppThemeWrapper(darkTheme = isDarkTheme) {
+        Surface(color = MaterialTheme.colorScheme.background) {
+            AppNavGraph(
+                navController = navController,
+                authViewModel = authViewModel,
+                mainViewModel = mainViewModel,
+                loggedUser = loggedUser,
+                protocolos = protocolos,
+                isDarkTheme = isDarkTheme,
+                onToggleTheme = { estadoViewModel.alternarEstado() },
+                onLogout = {
+                    loggedUser = null
+                    scope.launch { userPrefs.setLoggedIn(false) }
+                },
+                onLoginOk = { email ->
+                    scope.launch {
+                        loggedUser = userRepository.getUserByEmail(email)
                     }
-
-                    // Pantalla 2: Registro
-                    composable("register") {
-                        RegisterScreen(
-                            viewModel = registerViewModel,
-                            onRegisterSuccess = {
-                                navController.popBackStack()
-                            },
-                            onNavigateBack = {
-                                navController.popBackStack()
-                            }
-                        )
-                    }
-
-                    // Pantalla 3: Home (Catálogo de Equipos)
-                    composable("home") {
-                        HomeScreen(
-                            onNavigateToCart = { navController.navigate("cart") },
-                            onNavigateToProfile = { navController.navigate("profile") },
-                            onNavigateToDetail = { productId ->
-                                navController.navigate("detail/$productId")
-                            },
-                            onToggleTheme = { isDarkTheme = !isDarkTheme },
-                            onLogout = {
-                                loggedUser = null
-                                navController.navigate("login") {
-                                    popUpTo(0) { inclusive = true }
-                                }
-                            }
-                        )
-                    }
-
-                    // Pantalla 4: Detalle del Equipo y Registro de Mediciones en Terreno
-                    composable(
-                        route = "detail/{productId}",
-                        arguments = listOf(navArgument("productId") { type = NavType.IntType })
-                    ) { backStackEntry ->
-                        val productId = backStackEntry.arguments?.getInt("productId") ?: 1
-                        ProductDetailScreen(
-                            productId = productId,
-                            onBackClick = { navController.popBackStack() },
-                            onHomeClick = {
-                                navController.navigate("home") {
-                                    popUpTo("home") { inclusive = true }
-                                }
-                            },
-                            onNavigateToCart = {
-                                // Abre la pantalla de protocolos directamente desde el icono superior
-                                navController.navigate("cart")
-                            },
-                            onAddProtocol = { product, valoresMedicion, fechaHora ->
-                                coroutineScope.launch {
-                                    val cartItem = CartItemEntity(
-                                        productId = product.id,
-                                        titulo = product.titulo,
-                                        codigoEquipo = product.codigoEquipo,
-                                        ubicacionCliente = product.ubicacionCliente,
-                                        valoresMedicion = valoresMedicion,
-                                        fechaHora = fechaHora,
-                                        imagenResId = product.imagenResId,
-                                        cantidad = 1,
-                                        isSelected = true
-                                    )
-                                    userDao.insertCartItem(cartItem)
-                                }
-                            }
-                        )
-                    }
-
-                    // Pantalla 5: Listado de Protocolos Registrados
-                    composable("cart") {
-                        CartScreen(
-                            cartItems = cartItemsFlow.value,
-                            onToggleSelection = { item ->
-                                coroutineScope.launch {
-                                    userDao.updateCartItem(item.copy(isSelected = !item.isSelected))
-                                }
-                            },
-                            onDeleteItem = { itemId ->
-                                coroutineScope.launch {
-                                    userDao.deleteCartItem(itemId)
-                                }
-                            },
-                            onCheckout = {
-                                coroutineScope.launch {
-                                    userDao.clearCart()
-                                    navController.popBackStack()
-                                }
-                            },
-                            onBackClick = {
-                                navController.popBackStack()
-                            },
-                            onHomeClick = {
-                                navController.navigate("home") {
-                                    popUpTo("home") { inclusive = true }
-                                }
-                            }
-                        )
-                    }
-
-                    // Pantalla 6: Mi Perfil (Técnico)
-                    composable("profile") {
+                },
+                onUpdateProfile = { nuevaDireccion, nuevaFotoUri ->
+                    scope.launch {
                         loggedUser?.let { user ->
-                            ProfileScreen(
-                                user = user,
-                                onUpdateProfile = { nuevaDireccion, nuevaFotoUri ->
-                                    coroutineScope.launch {
-                                        val updatedUser = user.copy(direccion = nuevaDireccion, fotoUri = nuevaFotoUri)
-                                        userRepository.updateUser(updatedUser)
-                                        loggedUser = updatedUser
-                                        navController.popBackStack()
-                                    }
-                                },
-                                onBackClick = { navController.popBackStack() }
-                            )
+                            val updated = user.copy(direccion = nuevaDireccion, fotoUri = nuevaFotoUri)
+                            userRepository.updateUser(updated)
+                            loggedUser = updated
                         }
                     }
+                },
+                onAddProtocolo = { equipo: EquipoElectrico, valores: String, fechaHora: String ->
+                    protocoloViewModel.guardarProtocolo(equipo, valores, fechaHora)
+                },
+                onToggleProtocolo = { item ->
+                    protocoloViewModel.alternarSeleccion(item)
+                },
+                onDeleteProtocolo = { id ->
+                    protocoloViewModel.eliminarProtocolo(id)
+                },
+                onSincronizar = {
+                    protocoloViewModel.sincronizarProtocolos()
                 }
-            }
+            )
         }
     }
 }
