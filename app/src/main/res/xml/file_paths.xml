@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths>
+    <!-- Patrón Ej.8 UINavegacion: fotos temporales de cámara en cache/images -->
+    <cache-path name="camera_path" path="images/" />
+</paths>

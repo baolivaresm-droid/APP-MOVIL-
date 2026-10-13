@@ -62,6 +62,12 @@ dependencies {
     implementation("androidx.room:room-runtime:$roomVersion")
     implementation("androidx.room:room-ktx:$roomVersion")
     ksp("androidx.room:room-compiler:$roomVersion")
+
+    // --- Patrón Ej.8 UINavegacion: DataStore + Coil + corrutinas ---
+    implementation("androidx.lifecycle:lifecycle-runtime-compose:2.7.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
+    implementation("io.coil-kt:coil-compose:2.7.0")
+    implementation("androidx.datastore:datastore-preferences:1.1.1")
     // -------------------------
 
     testImplementation(libs.junit)
