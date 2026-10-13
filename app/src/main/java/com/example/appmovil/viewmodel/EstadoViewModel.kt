@@ -10,16 +10,13 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
-// Patrón Ej.5: EstadoViewModel con DataStore + mensaje de confirmación auto-ocultable.
+// Patrón Ej.5: EstadoViewModel con DataStore.
 class EstadoViewModel(application: Application) : AndroidViewModel(application) {
 
     private val store = EstadoDataStore(application)
 
     private val _activo = MutableStateFlow<Boolean?>(null)
     val activo: StateFlow<Boolean?> = _activo
-
-    private val _mostrarMensaje = MutableStateFlow(false)
-    val mostrarMensaje: StateFlow<Boolean> = _mostrarMensaje
 
     init {
         cargarEstado()
@@ -37,9 +34,6 @@ class EstadoViewModel(application: Application) : AndroidViewModel(application) 
         viewModelScope.launch {
             store.guardarEstado(nuevo)
             _activo.value = nuevo
-            _mostrarMensaje.value = true
-            delay(2000)
-            _mostrarMensaje.value = false
         }
     }
 }

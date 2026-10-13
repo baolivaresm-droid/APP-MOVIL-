@@ -241,7 +241,3 @@ fun EquipoCard(equipo: EquipoElectrico, onClick: () -> Unit) {
         }
     }
 }
-
-// Alias temporal: ProductCard.
-@Composable
-fun ProductCard(product: EquipoElectrico, onClick: () -> Unit) = EquipoCard(equipo = product, onClick = onClick)
