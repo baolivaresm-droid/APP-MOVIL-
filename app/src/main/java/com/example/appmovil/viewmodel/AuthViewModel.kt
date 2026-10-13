@@ -16,7 +16,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-// Estados de UI en model/ (patrón Ej.4): ver model/UsuarioUiState.kt
 // (LoginUiState y RegisterUiState importados arriba)
 
 class AuthViewModel(private val repository: UserRepository) : ViewModel() {
