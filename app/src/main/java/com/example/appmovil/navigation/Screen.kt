@@ -6,7 +6,8 @@ sealed class Screen(val route: String) {
     data object Login : Screen(route = Route.Login.path)
     data object Register : Screen(route = Route.Register.path)
     data object Home : Screen(route = Route.Home.path)
-    data object Protocolos : Screen(route = Route.Protocolos.path)
     data object Perfil : Screen(route = Route.Perfil.path)
-    data class Detalle(val equipoId: Int) : Screen(route = Route.Detalle.buildRoute(equipoId))
+    data class EmpresaDetalle(val empresaId: Long) : Screen(route = Route.EmpresaDetalle.buildRoute(empresaId))
+    data class MedicionForm(val maquinaId: Long) : Screen(route = Route.MedicionForm.buildRoute(maquinaId))
+    data class Informe(val medicionId: Long) : Screen(route = Route.Informe.buildRoute(medicionId))
 }

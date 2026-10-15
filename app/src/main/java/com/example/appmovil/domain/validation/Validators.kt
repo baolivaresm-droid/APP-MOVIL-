@@ -48,3 +48,25 @@ fun validateMedicion(valor: String): String? {
     if (valor.trim().length < 3) return "Medición muy corta, ej: 2.8 GΩ"
     return null
 }
+
+// Valida nombre de empresa/ubicación en terreno (CasoA pantalla 3)
+fun validateEmpresaNombre(valor: String): String? {
+    if (valor.isBlank()) return "El nombre de la empresa es obligatorio"
+    if (valor.trim().length < 2) return "Nombre muy corto"
+    return null
+}
+
+// Valida zona en terreno (CasoA pantalla 3)
+fun validateZona(valor: String): String? {
+    if (valor.isBlank()) return "La zona es obligatoria"
+    if (valor.trim().length < 2) return "Zona muy corta, ej: Planta Maipú"
+    return null
+}
+
+// Valida código de maquinaria (CasoA pantalla 4, ej: REL-123)
+fun validateCodigoMaquina(valor: String): String? {
+    if (valor.isBlank()) return "El código es obligatorio"
+    if (valor.trim().length < 3) return "Código muy corto, ej: REL-123"
+    val regex = Regex("^[A-Za-z0-9\\-]+$")
+    return if (!regex.matches(valor.trim())) "Solo letras, números y guion" else null
+}

@@ -21,16 +21,21 @@ import androidx.navigation.compose.rememberNavController
 import com.example.appmovil.data.local.database.AppDatabase
 import com.example.appmovil.data.local.storage.UserPreferences
 import com.example.appmovil.data.local.user.UserEntity
-import com.example.appmovil.data.repository.ProtocoloRepository
+import com.example.appmovil.data.repository.EmpresaRepository
+import com.example.appmovil.data.repository.MaquinaRepository
+import com.example.appmovil.data.repository.MedicionRepository
 import com.example.appmovil.data.repository.UserRepository
-import com.example.appmovil.model.EquipoElectrico
 import com.example.appmovil.navigation.AppNavGraph
 import com.example.appmovil.viewmodel.AuthViewModel
 import com.example.appmovil.viewmodel.AuthViewModelFactory
+import com.example.appmovil.viewmodel.EmpresaViewModel
+import com.example.appmovil.viewmodel.EmpresaViewModelFactory
 import com.example.appmovil.viewmodel.EstadoViewModel
 import com.example.appmovil.viewmodel.MainViewModel
-import com.example.appmovil.viewmodel.ProtocoloViewModel
-import com.example.appmovil.viewmodel.ProtocoloViewModelFactory
+import com.example.appmovil.viewmodel.MaquinaViewModel
+import com.example.appmovil.viewmodel.MaquinaViewModelFactory
+import com.example.appmovil.viewmodel.MedicionViewModel
+import com.example.appmovil.viewmodel.MedicionViewModelFactory
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
@@ -44,6 +49,7 @@ class MainActivity : ComponentActivity() {
 }
 
 // Patrón Ej.8 MainActivity AppRoot: Composition Root con Room + repositorios + VM inyectado.
+// CasoA: Auth + Empresa -> Maquina -> Medicion.
 @Composable
 fun AppRoot() {
     val context = LocalContext.current.applicationContext
@@ -51,20 +57,27 @@ fun AppRoot() {
 
     val db = remember { AppDatabase.getInstance(context) }
     val userRepository = remember { UserRepository(db.userDao()) }
-    val protocoloRepository = remember { ProtocoloRepository(db.protocoloDao()) }
+    val empresaRepository = remember { EmpresaRepository(db.empresaDao()) }
+    val maquinaRepository = remember { MaquinaRepository(db.maquinaDao()) }
+    val medicionRepository = remember { MedicionRepository(db.medicionDao()) }
     val userPrefs = remember { UserPreferences(context) }
 
     val authViewModel: AuthViewModel = viewModel(factory = AuthViewModelFactory(userRepository))
     val mainViewModel: MainViewModel = viewModel()
     // Ej.5: el tema claro/oscuro vive en EstadoViewModel + DataStore.
     val estadoViewModel: EstadoViewModel = viewModel()
-    // Ej.7: los protocolos viven en ProtocoloViewModel + StateFlow.
-    val protocoloViewModel: ProtocoloViewModel = viewModel(
-        factory = ProtocoloViewModelFactory(protocoloRepository)
+    // CasoA: empresas, maquinaria y mediciones viven en sus VM + StateFlow.
+    val empresaViewModel: EmpresaViewModel = viewModel(
+        factory = EmpresaViewModelFactory(empresaRepository)
+    )
+    val maquinaViewModel: MaquinaViewModel = viewModel(
+        factory = MaquinaViewModelFactory(maquinaRepository)
+    )
+    val medicionViewModel: MedicionViewModel = viewModel(
+        factory = MedicionViewModelFactory(medicionRepository)
     )
 
     var loggedUser by remember { mutableStateOf<UserEntity?>(null) }
-    val protocolos by protocoloViewModel.protocolos.collectAsState()
     val temaActivo by estadoViewModel.activo.collectAsState()
     val isDarkTheme = temaActivo ?: false
 
@@ -76,8 +89,10 @@ fun AppRoot() {
                 navController = navController,
                 authViewModel = authViewModel,
                 mainViewModel = mainViewModel,
+                empresaViewModel = empresaViewModel,
+                maquinaViewModel = maquinaViewModel,
+                medicionViewModel = medicionViewModel,
                 loggedUser = loggedUser,
-                protocolos = protocolos,
                 isDarkTheme = isDarkTheme,
                 onToggleTheme = { estadoViewModel.alternarEstado() },
                 onLogout = {
@@ -97,18 +112,6 @@ fun AppRoot() {
                             loggedUser = updated
                         }
                     }
-                },
-                onAddProtocolo = { equipo: EquipoElectrico, valores: String, fechaHora: String ->
-                    protocoloViewModel.guardarProtocolo(equipo, valores, fechaHora)
-                },
-                onToggleProtocolo = { item ->
-                    protocoloViewModel.alternarSeleccion(item)
-                },
-                onDeleteProtocolo = { id ->
-                    protocoloViewModel.eliminarProtocolo(id)
-                },
-                onSincronizar = { seleccionados ->
-                    protocoloViewModel.sincronizarSeleccionados(seleccionados)
                 }
             )
         }

@@ -2,4 +2,6 @@
 <paths>
     <!-- Patrón Ej.8 UINavegacion: fotos temporales de cámara en cache/images -->
     <cache-path name="camera_path" path="images/" />
+    <!-- CasoA pantalla 6: informes PDF para compartir -->
+    <cache-path name="informes_path" path="informes/" />
 </paths>
