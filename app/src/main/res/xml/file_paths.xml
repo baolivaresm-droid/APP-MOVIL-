@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths>
+    <!-- Patrón Ej.8 UINavegacion: fotos de cámara en cache/images -->
+    <cache-path name="camera_path" path="images/" />
+    <!-- Protocolos PDF generados: se guardan en filesDir para que el
+         administrador pueda volver a compartirlos desde su historial -->
+    <files-path name="informes_path" path="informes/" />
+</paths>
